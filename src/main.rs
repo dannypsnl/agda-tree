@@ -74,7 +74,7 @@ fn collect_html(files: &Vec<PathBuf>) {
 
         // TODO: haven't recover the Literate tree part
         let mut output = File::create(Path::new(basename).with_extension("tree")).unwrap();
-        output.write("\\import{base-macros}\n".as_bytes()).unwrap();
+        output.write("\\xmlns:html{http://www.w3.org/1999/xhtml}\n".as_bytes()).unwrap();
         for block in forester_blocks {
             output.write(block.as_bytes()).unwrap();
         }

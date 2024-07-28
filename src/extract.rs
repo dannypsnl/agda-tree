@@ -20,24 +20,20 @@ where
     let mut buffer = String::new();
     let mut result = vec![];
     for line in lines_of_agda_tree {
-        match line {
-            Ok(line) => {
-                if line == "\\agda{" {
-                    recording = true;
-                    buffer.push_str("```agda\n");
-                } else if line == "}" && recording {
-                    buffer.push_str("```");
-                    result.push(buffer);
-                    buffer = String::new();
-                    recording = false;
-                } else {
-                    if recording {
-                        buffer.push_str(line.as_str());
-                        buffer.push('\n');
-                    }
-                }
+        let line = line?;
+        if line == "\\agda{" {
+            recording = true;
+            buffer.push_str("```agda\n");
+        } else if line == "}" && recording {
+            buffer.push_str("```");
+            result.push(buffer);
+            buffer = String::new();
+            recording = false;
+        } else {
+            if recording {
+                buffer.push_str(line.as_str());
+                buffer.push('\n');
             }
-            Err(e) => {}
         }
     }
     Ok(result)

@@ -1,7 +1,7 @@
-\title{coproduct in univalent}
+\title{coproduct}
+\author{dannypsnl}
 
-\p{Hello}
-
+\<html:details>{\<html:summary>{#{\triangle} Helpers}
 \agda{
 module coproduct where
 open import foundation
@@ -14,4 +14,62 @@ variable
 
 ∅ : UU
 ∅ = empty
+}
+}
+
+\p{We can prove that a type plus empty type is equiv to itself, so \code{𝔸 + ∅ ≃ 𝔸}.}
+
+\agda{
+module 𝔸+∅ (𝔸 : UU l) where
+  f : 𝔸 + ∅ → 𝔸
+  f (inl a) = a
+  f (inr ())
+
+  add-nothing : 𝔸 + ∅ ≃ 𝔸
+  pr1 add-nothing = f
+  pr1 (pr2 add-nothing) = (λ a → inl a) , λ _ → refl
+  pr2 (pr2 add-nothing) = (λ a → inl a) , lem
+    where
+      lem : (a+∅ : 𝔸 + ∅) → inl (f a+∅) ＝ a+∅
+      lem (inl a) = refl
+      lem (inr ())
+}
+
+\p{We can also see that the \code{+} is symmetric, which means \code{𝔸 + 𝔹 ≃ 𝔹 + 𝔸}.}
+
+\agda{
+module Symm (𝔸 𝔹 : UU l) where
+  g : 𝔸 + 𝔹 → 𝔹 + 𝔸
+  g (inl a) = inr a
+  g (inr b) = inl b
+  g' : 𝔹 + 𝔸 → 𝔸 + 𝔹
+  g' (inl b) = inr b
+  g' (inr a) = inl a
+
+  lem₁ : (x : 𝔹 + 𝔸) → (g ∘ g') x ＝ x
+  lem₁ (inl a) = refl
+  lem₁ (inr b) = refl
+
+  lem₂ : (x : 𝔸 + 𝔹) → (g' ∘ g) x ＝ x
+  lem₂ (inl a) = refl
+  lem₂ (inr b) = refl
+
+  +-symm : 𝔸 + 𝔹 ≃ 𝔹 + 𝔸
+  pr1 +-symm = g
+  pr1 (pr2 +-symm) = g' , λ x → lem₁ x
+  pr2 (pr2 +-symm) = g' , λ x → lem₂ x
+}
+
+\agda{
+module _ (𝔸 : UU) where
+  lemma : ∅ + 𝔸 ≃ 𝔸 + ∅
+  lemma = Symm.+-symm ∅ 𝔸
+
+  lemma₂ : ∅ + 𝔸 ≃ 𝔸
+  lemma₂ = equivalence-reasoning
+      ∅ + 𝔸
+    ≃ 𝔸 + ∅
+      by lemma
+    ≃ 𝔸
+      by 𝔸+∅.add-nothing 𝔸
 }

@@ -1,5 +1,6 @@
 #![feature(path_file_prefix)]
 use html_parser::{Dom, Element, Node};
+use std::collections::VecDeque;
 use std::fs::{self};
 use std::fs::{read_to_string, File};
 use std::io::Write;
@@ -97,8 +98,8 @@ fn collect_html(working_dir: &Path, paths: &Vec<PathBuf>, trees: Vec<Tree>) {
     });
 }
 
-fn agda_html_blocks(nodes: &Vec<Node>) -> Vec<String> {
-    let mut blocks = vec![];
+fn agda_html_blocks(nodes: &Vec<Node>) -> VecDeque<String> {
+    let mut blocks = VecDeque::new();
     let mut buffer = String::new();
     let mut recording = false;
     let mut line = line_of_symbol(nodes[0].element().unwrap());
@@ -111,7 +112,7 @@ fn agda_html_blocks(nodes: &Vec<Node>) -> Vec<String> {
             buffer.push_str("\\<html:pre>[class]{Agda}{\n");
         } else if is_block_end(elem) {
             buffer.push_str("}");
-            blocks.push(buffer);
+            blocks.push_back(buffer);
             recording = false;
             buffer = String::new();
         } else if recording {

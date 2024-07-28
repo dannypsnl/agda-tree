@@ -28,7 +28,11 @@ where
             recording = true;
             buffer.push_str("```agda\n");
         } else if line == "}" && recording {
-            buffer.push_str("```");
+            // remember, we must insert these `---` text, to ensure closed
+            //     ```
+            //     ```agda
+            // will not be treated as same HTML node
+            buffer.push_str("```\n---\n");
             result.push(buffer);
             buffer = String::new();
             recording = false;

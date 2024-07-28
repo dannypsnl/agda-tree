@@ -1,5 +1,5 @@
-use std::fs::File;
 use std::io::Write;
+use std::{collections::VecDeque, fs::File};
 use Line::{AgdaBlock, Content};
 
 pub enum Line {
@@ -23,13 +23,13 @@ impl Tree {
         self.lines.push(Line::AgdaBlock);
     }
 
-    pub fn merge(&self, mut agda_blocks: Vec<String>) -> Tree {
+    pub fn merge(&self, mut agda_blocks: VecDeque<String>) -> Tree {
         let mut new_tree = Tree::new();
         for l in &self.lines {
             match l {
                 Content(s) => new_tree.push(s.clone()),
                 AgdaBlock => {
-                    let k = agda_blocks.pop().expect("agda blocks is not enough");
+                    let k = agda_blocks.pop_front().expect("agda blocks is not enough");
                     new_tree.push(k);
                 }
             }

@@ -177,7 +177,15 @@ fn symbol2forest(elem: &Element) -> String {
         } else {
             childtext.to_owned()
         };
-        s.push_str(format!("{{\\startverb {} \\stopverb}}", childtext).as_str());
+        if childtext.contains('(')
+            || childtext.contains(')')
+            || childtext.contains('{')
+            || childtext.contains('}')
+        {
+            s.push_str(format!("{{\\startverb {} \\stopverb}}", childtext).as_str());
+        } else {
+            s.push_str(format!("{{{}}}", childtext).as_str());
+        }
     }
 
     s

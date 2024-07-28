@@ -1,0 +1,17 @@
+\title{coproduct in univalent}
+
+\p{Hello}
+
+\agda{
+module coproduct where
+open import foundation
+
+variable
+  l : Level
+
+𝟙 : UU
+𝟙 = unit
+
+∅ : UU
+∅ = empty
+}

@@ -169,9 +169,14 @@ fn symbol2forest(elem: &Element) -> String {
     if elem.children.is_empty() {
         s.push_str("{}");
     } else {
-        for c in &elem.children {
-            s.push_str(format!("{{\\startverb {} \\stopverb}}", c.text().unwrap()).as_str());
-        }
+        let childtext = elem.children[0].text().unwrap();
+        // some escape code is useful for HTML, but not for forester
+        let childtext = if childtext.contains("&#39;") {
+            childtext.replace("&#39;", "'")
+        } else {
+            childtext.to_owned()
+        };
+        s.push_str(format!("{{\\startverb {} \\stopverb}}", childtext).as_str());
     }
 
     s

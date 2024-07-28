@@ -33,4 +33,4 @@ After that, you can move generated `*.tree` to `trees/` directory in forest, the
 
 ## Example
 
-![image](https://github.com/user-attachments/assets/540a181a-cace-4412-ae4b-9afc7daa6ce9)
+![image](https://github.com/user-attachments/assets/d1f22b08-814b-4893-aa92-1d2e1a03a273)

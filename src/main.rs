@@ -1,8 +1,9 @@
 #![feature(path_file_prefix)]
-use std::fs::File;
+use html_parser::Dom;
 use std::fs::{self};
+use std::fs::{read_to_string, File};
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use agda_tree::extract::extract_agda_code;
 
@@ -40,12 +41,29 @@ fn main() {
 
     generate_index(&files);
 
-    // TODO:
-    // final `output` is the a usual forester tree, we put final result in it
-    files.into_iter().for_each(|path| {});
+    files.into_iter().for_each(|path| {
+        let basename = path.file_prefix().unwrap().to_str().unwrap();
+        let agda_html = Path::new("html").join(basename).with_extension("html");
 
-    // NOTE:
-    // - html parser: https://github.com/y21/tl
+        let s = read_to_string(&agda_html)
+            .expect(format!("failed to open generated html file `{:?}`", agda_html).as_str());
+        let dom = Dom::parse(s.as_str()).unwrap();
+
+        // This is the agda code blocks in generated html
+        println!(
+            "{:?}",
+            dom.children[0].element().unwrap().children[1]
+                .element()
+                .unwrap()
+                .children[0]
+                .element()
+                .unwrap()
+                .children
+        );
+
+        // TODO:
+        // final `output` is the a usual forester tree, we put final result in it
+    });
 }
 
 fn generate_index(files: &Vec<PathBuf>) {

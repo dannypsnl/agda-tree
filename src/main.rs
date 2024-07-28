@@ -1,5 +1,5 @@
 #![feature(path_file_prefix)]
-use html_parser::Dom;
+use html_parser::{Dom, Element, Node};
 use std::fs::{self};
 use std::fs::{read_to_string, File};
 use std::io::Write;
@@ -62,19 +62,71 @@ fn collect_html(files: &Vec<PathBuf>) {
             .expect(format!("failed to open generated html file `{:?}`", agda_html).as_str());
         let dom = Dom::parse(s.as_str()).unwrap();
 
-        // This is the agda code blocks in generated html
-        println!(
-            "{:?}",
-            dom.children[0].element().unwrap().children[1]
-                .element()
-                .unwrap()
-                .children[0]
-                .element()
-                .unwrap()
-                .children
-        );
+        let nodes = &dom.children[0].element().unwrap().children[1]
+            .element()
+            .unwrap()
+            .children[0]
+            .element()
+            .unwrap()
+            .children;
 
-        // TODO:
-        // final `output` is the a usual forester tree, we put final result in it
+        let forester_blocks = agda_html_blocks(nodes);
+
+        // TODO: haven't recover the Literate tree part
+        let mut output = File::create(Path::new(basename).with_extension("tree")).unwrap();
+        output.write("\\import{base-macros}\n".as_bytes()).unwrap();
+        for block in forester_blocks {
+            output.write(block.as_bytes()).unwrap();
+        }
     });
+}
+
+fn agda_html_blocks(nodes: &Vec<Node>) -> Vec<String> {
+    let mut blocks = vec![];
+    let mut buffer = String::new();
+    let mut recording = false;
+    for node in nodes {
+        if is_block_start(node.element().unwrap()) {
+            recording = true;
+            buffer.push_str("\\<html:pre>[class]{Agda}{\n");
+        } else if is_block_end(node.element().unwrap()) {
+            buffer.push_str("}");
+            blocks.push(buffer);
+            recording = false;
+            buffer = String::new();
+        } else if recording {
+            buffer.push_str(to_forester_syntax(node.element().unwrap()).as_str())
+        }
+    }
+    blocks
+}
+fn is_block_start(elem: &Element) -> bool {
+    !elem.children.is_empty() && elem.children[0].text().unwrap().contains("```agda")
+}
+fn is_block_end(elem: &Element) -> bool {
+    !elem.children.is_empty() && elem.children[0].text().unwrap().contains("```")
+}
+
+fn to_forester_syntax(elem: &Element) -> String {
+    let mut s = format!("\\<html:{}>", elem.name);
+
+    if elem.id.is_some() {
+        s.push_str(format!("[id]{{{}}}", elem.id.clone().unwrap().as_str()).as_str());
+    }
+    if !elem.classes.is_empty() {
+        s.push_str(format!("[class]{{{}}}", elem.classes[0]).as_str());
+    }
+    for (k, v) in &elem.attributes {
+        s.push_str(format!("[{}]{{{}}}", k, v.clone().unwrap().as_str()).as_str());
+    }
+    if elem.children.is_empty() {
+        s.push_str("{}");
+    } else {
+        for c in &elem.children {
+            s.push_str(format!("{{{}}}", c.text().unwrap()).as_str());
+        }
+    }
+
+    s.push('\n');
+    s
 }

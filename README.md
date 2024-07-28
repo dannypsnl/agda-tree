@@ -7,7 +7,8 @@ Converts `*.lagda.tree` to `*.tree`.
 Let's say you have a forest (evergreen notes system via [forester](https://www.jonmsterling.com/jms-005P.xml)), and the directory structure is
 
 ```
-.|
+.
+ |
  |-forest.toml      (config of forester)
  |-trees            (for forester)
  |-xxx

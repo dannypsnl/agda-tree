@@ -92,7 +92,6 @@ fn collect_html(working_dir: &Path, paths: &Vec<PathBuf>, trees: Vec<Tree>) {
 
         let new_tree = tree.merge(forester_blocks);
 
-        // TODO: haven't recover the Literate tree part
         let output = File::create(Path::new(basename).with_extension("tree")).unwrap();
         new_tree.write(output);
     });

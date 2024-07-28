@@ -169,7 +169,7 @@ fn symbol2forest(elem: &Element) -> String {
         s.push_str("{}");
     } else {
         for c in &elem.children {
-            s.push_str(format!("{{{}}}", c.text().unwrap()).as_str());
+            s.push_str(format!("{{\\startverb {} \\stopverb}}", c.text().unwrap()).as_str());
         }
     }
 

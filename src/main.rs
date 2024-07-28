@@ -3,15 +3,17 @@ use html_parser::{Dom, Element, Node};
 use std::fs::{self};
 use std::fs::{read_to_string, File};
 use std::io::Write;
+use std::iter::zip;
 use std::path::{Path, PathBuf};
 
 use agda_tree::extract::extract_agda_code;
+use agda_tree::tree::Tree;
 
 fn main() {
     // TODO: directory should be provided by users
     let working_dir = Path::new(".");
 
-    let files = fs::read_dir(working_dir)
+    let paths = fs::read_dir(working_dir)
         .unwrap()
         .filter_map(Result::ok)
         .filter_map(|f| {
@@ -24,28 +26,33 @@ fn main() {
         })
         .collect::<Vec<PathBuf>>();
 
-    generate_lagda_md(&files);
-    generate_index(&files);
-    collect_html(working_dir, &files);
+    let trees = generate_lagda_md(&paths);
+    generate_index(&paths);
+    collect_html(working_dir, &paths, trees);
 }
 
-fn generate_lagda_md(files: &Vec<PathBuf>) {
-    files.into_iter().for_each(|path| {
-        let agda_blocks =
-            extract_agda_code(&path).expect(format!("failed to read file `{:?}`", path).as_str());
+fn generate_lagda_md(paths: &Vec<PathBuf>) -> Vec<Tree> {
+    paths
+        .into_iter()
+        .map(|path| {
+            let (tree, agda_blocks) = extract_agda_code(&path)
+                .expect(format!("failed to read file `{:?}`", path).as_str());
 
-        let lagda_md = path.with_extension("md");
+            let lagda_md = path.with_extension("md");
 
-        let mut middle = File::create(lagda_md).unwrap();
-        for block in agda_blocks {
-            middle.write(block.as_bytes()).unwrap();
-        }
-    });
+            let mut middle = File::create(lagda_md).unwrap();
+            for block in agda_blocks {
+                middle.write(block.as_bytes()).unwrap();
+            }
+
+            tree
+        })
+        .collect()
 }
 
-fn generate_index(files: &Vec<PathBuf>) {
+fn generate_index(paths: &Vec<PathBuf>) {
     // generate a index agda module, import our `.lagda.md`
-    let imports = &files
+    let imports = paths
         .into_iter()
         .map(|path| format!("import {}", path.file_prefix().unwrap().to_str().unwrap()))
         .collect::<Vec<String>>();
@@ -55,8 +62,8 @@ fn generate_index(files: &Vec<PathBuf>) {
     }
 }
 
-fn collect_html(working_dir: &Path, files: &Vec<PathBuf>) {
-    files.into_iter().for_each(|path| {
+fn collect_html(working_dir: &Path, paths: &Vec<PathBuf>, trees: Vec<Tree>) {
+    zip(paths.into_iter(), trees.into_iter()).for_each(|(path, tree)| {
         let basename = path.file_prefix().unwrap().to_str().unwrap();
         let agda_html = working_dir
             .join("html")
@@ -77,14 +84,11 @@ fn collect_html(working_dir: &Path, files: &Vec<PathBuf>) {
 
         let forester_blocks = agda_html_blocks(nodes);
 
+        let new_tree = tree.merge(forester_blocks);
+
         // TODO: haven't recover the Literate tree part
-        let mut output = File::create(Path::new(basename).with_extension("tree")).unwrap();
-        output
-            .write("\\xmlns:html{http://www.w3.org/1999/xhtml}\n".as_bytes())
-            .unwrap();
-        for block in forester_blocks {
-            output.write(block.as_bytes()).unwrap();
-        }
+        let output = File::create(Path::new(basename).with_extension("tree")).unwrap();
+        new_tree.write(output);
     });
 }
 

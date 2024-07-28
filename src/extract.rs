@@ -3,6 +3,8 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
+use crate::tree::Tree;
+
 /// The function do is
 ///
 /// - if match `\agda{`, then open recorder
@@ -10,7 +12,7 @@ use std::path::Path;
 /// - if recorder is on, then push the content
 ///
 /// so one must write `\agda{` and `}` without space and be single line, this might have problem but for now it's good enough.
-pub fn extract_agda_code<P>(filename: P) -> io::Result<Vec<String>>
+pub fn extract_agda_code<P>(filename: P) -> io::Result<(Tree, Vec<String>)>
 where
     P: AsRef<Path>,
 {
@@ -19,6 +21,7 @@ where
     let mut recording = false;
     let mut buffer = String::new();
     let mut result = vec![];
+    let mut tree = Tree::new();
     for line in lines_of_agda_tree {
         let line = line?;
         if line == "\\agda{" {
@@ -29,14 +32,15 @@ where
             result.push(buffer);
             buffer = String::new();
             recording = false;
+            tree.push_agda();
+        } else if recording {
+            buffer.push_str(line.as_str());
+            buffer.push('\n');
         } else {
-            if recording {
-                buffer.push_str(line.as_str());
-                buffer.push('\n');
-            }
+            tree.push(line);
         }
     }
-    Ok(result)
+    Ok((tree, result))
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>

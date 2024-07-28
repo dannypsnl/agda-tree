@@ -9,7 +9,9 @@ use agda_tree::extract::extract_agda_code;
 
 fn main() {
     // TODO: directory should be provided by users
-    let files = fs::read_dir(".")
+    let working_dir = Path::new(".");
+
+    let files = fs::read_dir(working_dir)
         .unwrap()
         .filter_map(Result::ok)
         .filter_map(|f| {
@@ -24,7 +26,7 @@ fn main() {
 
     generate_lagda_md(&files);
     generate_index(&files);
-    collect_html(&files);
+    collect_html(working_dir, &files);
 }
 
 fn generate_lagda_md(files: &Vec<PathBuf>) {
@@ -53,10 +55,13 @@ fn generate_index(files: &Vec<PathBuf>) {
     }
 }
 
-fn collect_html(files: &Vec<PathBuf>) {
+fn collect_html(working_dir: &Path, files: &Vec<PathBuf>) {
     files.into_iter().for_each(|path| {
         let basename = path.file_prefix().unwrap().to_str().unwrap();
-        let agda_html = Path::new("html").join(basename).with_extension("html");
+        let agda_html = working_dir
+            .join("html")
+            .join(basename)
+            .with_extension("html");
 
         let s = read_to_string(&agda_html)
             .expect(format!("failed to open generated html file `{:?}`", agda_html).as_str());
@@ -74,7 +79,9 @@ fn collect_html(files: &Vec<PathBuf>) {
 
         // TODO: haven't recover the Literate tree part
         let mut output = File::create(Path::new(basename).with_extension("tree")).unwrap();
-        output.write("\\xmlns:html{http://www.w3.org/1999/xhtml}\n".as_bytes()).unwrap();
+        output
+            .write("\\xmlns:html{http://www.w3.org/1999/xhtml}\n".as_bytes())
+            .unwrap();
         for block in forester_blocks {
             output.write(block.as_bytes()).unwrap();
         }
@@ -85,21 +92,40 @@ fn agda_html_blocks(nodes: &Vec<Node>) -> Vec<String> {
     let mut blocks = vec![];
     let mut buffer = String::new();
     let mut recording = false;
+    let mut line = line_of_symbol(nodes[0].element().unwrap());
+    let mut last_col_end = end_col_of_symbol(nodes[0].element().unwrap());
+
     for node in nodes {
-        if is_block_start(node.element().unwrap()) {
+        let elem = node.element().unwrap();
+        if is_block_start(elem) {
             recording = true;
             buffer.push_str("\\<html:pre>[class]{Agda}{\n");
-        } else if is_block_end(node.element().unwrap()) {
+        } else if is_block_end(elem) {
             buffer.push_str("}");
             blocks.push(buffer);
             recording = false;
             buffer = String::new();
         } else if recording {
-            buffer.push_str(to_forester_syntax(node.element().unwrap()).as_str())
+            if line_of_symbol(elem) > line {
+                for _ in 0..(line_of_symbol(elem) - line) {
+                    buffer.push('\n');
+                }
+                last_col_end = 1;
+            }
+            if col_of_symbol(elem) > last_col_end {
+                for _ in 0..col_of_symbol(elem) - last_col_end {
+                    buffer.push(' ');
+                }
+            }
+            last_col_end = end_col_of_symbol(elem);
+            line = line_of_symbol(elem);
+            buffer.push_str(symbol2forest(elem).as_str());
         }
     }
+
     blocks
 }
+
 fn is_block_start(elem: &Element) -> bool {
     !elem.children.is_empty() && elem.children[0].text().unwrap().contains("```agda")
 }
@@ -107,7 +133,17 @@ fn is_block_end(elem: &Element) -> bool {
     !elem.children.is_empty() && elem.children[0].text().unwrap().contains("```")
 }
 
-fn to_forester_syntax(elem: &Element) -> String {
+fn line_of_symbol(elem: &Element) -> usize {
+    elem.source_span.end_line
+}
+fn col_of_symbol(elem: &Element) -> usize {
+    elem.source_span.start_column
+}
+fn end_col_of_symbol(elem: &Element) -> usize {
+    elem.source_span.end_column
+}
+
+fn symbol2forest(elem: &Element) -> String {
     let mut s = format!("\\<html:{}>", elem.name);
 
     if elem.id.is_some() {
@@ -127,6 +163,5 @@ fn to_forester_syntax(elem: &Element) -> String {
         }
     }
 
-    s.push('\n');
     s
 }

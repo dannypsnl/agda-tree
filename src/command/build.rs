@@ -24,9 +24,9 @@ pub fn execute(working_dir: &PathBuf, output_dir: &PathBuf, skip_agda: bool) -> 
         .collect::<Vec<PathBuf>>();
 
     let trees = generate_lagda_md(&paths)?;
-    generate_index(&paths)?;
+    let index_path = generate_index(working_dir, &paths)?;
     if !skip_agda {
-        run_agda_build(working_dir)?;
+        run_agda_build(working_dir, index_path)?;
     }
     collect_html(working_dir, output_dir, &paths, trees)
 }
@@ -44,26 +44,30 @@ fn generate_lagda_md(paths: &Vec<PathBuf>) -> io::Result<Vec<Tree>> {
     Ok(r)
 }
 
-fn run_agda_build(working_dir: &PathBuf) -> io::Result<()> {
+fn run_agda_build(working_dir: &PathBuf, index_path: PathBuf) -> io::Result<()> {
     let _ = Command::new("agda")
         .current_dir(working_dir)
-        .args(["--html", "index.agda"])
+        .args([
+            "--html",
+            index_path.into_os_string().into_string().unwrap().as_str(),
+        ])
         .output()
         .expect("failed to build agda htmls");
     Ok(())
 }
 
-fn generate_index(paths: &Vec<PathBuf>) -> io::Result<()> {
+fn generate_index(working_dir: &PathBuf, paths: &Vec<PathBuf>) -> io::Result<PathBuf> {
     // generate a index agda module, import our `.lagda.md`
     let imports = paths
         .into_iter()
         .map(|path| format!("import {}", path.file_prefix().unwrap().to_str().unwrap()))
         .collect::<Vec<String>>();
-    let mut index = File::create("index.agda")?;
+    let index_path = working_dir.join("index.agda");
+    let mut index = File::create(&index_path)?;
     for imp in imports {
         index.write(imp.as_bytes())?;
     }
-    Ok(())
+    Ok(index_path)
 }
 
 fn collect_html(

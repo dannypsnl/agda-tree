@@ -5,6 +5,7 @@ use std::fs::{read_to_string, File};
 use std::io::Write;
 use std::iter::zip;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use agda_tree::extract::extract_agda_code;
 use agda_tree::tree::Tree;
@@ -28,6 +29,11 @@ fn main() {
 
     let trees = generate_lagda_md(&paths);
     generate_index(&paths);
+    let _ = Command::new("agda")
+        .current_dir(working_dir)
+        .args(["--html", "index.agda"])
+        .output()
+        .expect("failed to build agda htmls");
     collect_html(working_dir, &paths, trees);
 }
 

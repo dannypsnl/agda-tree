@@ -2,6 +2,8 @@
 name = "agda-tree"
 version = "0.1.0"
 edition = "2021"
+description = "A build tool for *.lagda.tree format"
+license = "GPL-3.0-or-later"
 
 [dependencies]
 html_parser = "*"

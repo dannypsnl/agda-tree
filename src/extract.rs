@@ -1,8 +1,15 @@
-// The program here extract agda code from `*.agda.tree`
+//! The program here extract agda code from `*.agda.tree`
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
+/// The function do is
+///
+/// - if match `\agda{`, then open recorder
+/// - if match `}`, then close the recorder
+/// - if recorder is on, then push the content
+///
+/// so one must write `\agda{` and `}` without space and be single line, this might have problem but for now it's good enough.
 pub fn extract_agda_code<P>(filename: P) -> io::Result<Vec<String>>
 where
     P: AsRef<Path>,

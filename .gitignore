@@ -1,1 +1,5 @@
 /target
+/html
+/_build
+*.lagda.md
+*.agda

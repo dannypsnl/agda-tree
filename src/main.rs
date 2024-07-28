@@ -1,35 +1,61 @@
-use std::fs;
+#![feature(path_file_prefix)]
+use std::fs::File;
+use std::fs::{self};
+use std::io::Write;
+use std::path::PathBuf;
 
 use agda_tree::extract::extract_agda_code;
 
 fn main() {
     // TODO: directory should be provided by users
     let files = fs::read_dir(".").unwrap();
-    let files = files.filter_map(Result::ok).filter_map(|f| {
-        if let Ok(ft) = f.file_type() {
-            if ft.is_file() && f.path().to_str()?.ends_with(".lagda.tree") {
-                return Some(f);
+    let files = files
+        .filter_map(Result::ok)
+        .filter_map(|f| {
+            if let Ok(ft) = f.file_type() {
+                if ft.is_file() && f.path().to_str()?.ends_with(".lagda.tree") {
+                    return Some(f.path());
+                }
             }
-        }
-        None
-    });
+            None
+        })
+        .collect::<Vec<PathBuf>>();
 
-    files.for_each(|f| {
-        let agda_blocks = extract_agda_code(f.path())
-            .expect(format!("failed to read file `{:?}`", f.path()).as_str());
+    let files = files
+        .into_iter()
+        .map(|path| {
+            let agda_blocks = extract_agda_code(&path)
+                .expect(format!("failed to read file `{:?}`", path).as_str());
 
-        for bl in agda_blocks {
-            println!("{}", bl.as_str());
-        }
+            let lagda_md = path.with_extension("md");
 
-        let lagda_md = f.path().with_extension("lagda.md");
+            let mut middle = File::create(lagda_md).unwrap();
+            for block in agda_blocks {
+                middle.write(block.as_bytes()).unwrap();
+            }
 
-        // TODO:
-        // - extract agda code, provides a module
-        // - generate agda module for current `f`
-    });
+            path
+        })
+        .collect::<Vec<PathBuf>>();
+
+    generate_index(&files);
 
     // TODO:
-    // - generate a index agda module, such that all `agdas` are in it
-    // - final `output` is the a usual forester tree, we put final result in it
+    // final `output` is the a usual forester tree, we put final result in it
+    files.into_iter().for_each(|path| {});
+
+    // NOTE:
+    // - html parser: https://github.com/y21/tl
+}
+
+fn generate_index(files: &Vec<PathBuf>) {
+    // generate a index agda module, import our `.lagda.md`
+    let imports = &files
+        .into_iter()
+        .map(|path| format!("import {}", path.file_prefix().unwrap().to_str().unwrap()))
+        .collect::<Vec<String>>();
+    let mut index = File::create("index.agda").unwrap();
+    for imp in imports {
+        index.write(imp.as_bytes()).unwrap();
+    }
 }

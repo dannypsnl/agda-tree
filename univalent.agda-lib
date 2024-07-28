@@ -1,0 +1,4 @@
+name: univalent
+depend: agda-unimath
+include: .
+flags: --without-K --guardedness --no-import-sorts

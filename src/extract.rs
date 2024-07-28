@@ -12,7 +12,7 @@ use crate::tree::Tree;
 /// - if recorder is on, then push the content
 ///
 /// so one must write `\agda{` and `}` without space and be single line, this might have problem but for now it's good enough.
-pub fn extract_agda_code<P>(filename: P) -> io::Result<(Tree, Vec<String>)>
+pub(crate) fn extract_agda_code<P>(filename: P) -> io::Result<(Tree, Vec<String>)>
 where
     P: AsRef<Path>,
 {

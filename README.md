@@ -18,8 +18,7 @@ Let's say you have a forest (evergreen notes system via [forester](https://www.j
 then you can run
 
 ```sh
-cd xxx
-agda-tree
+agda-tree build xxx
 ```
 
 The command will

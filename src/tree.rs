@@ -2,12 +2,12 @@ use std::io::Write;
 use std::{collections::VecDeque, fs::File};
 use Line::{AgdaBlock, Content};
 
-pub enum Line {
+pub(crate) enum Line {
     AgdaBlock,
     Content(String),
 }
 
-pub struct Tree {
+pub(crate) struct Tree {
     lines: Vec<Line>,
 }
 

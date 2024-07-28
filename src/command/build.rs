@@ -4,7 +4,7 @@ use std::fs::{self};
 use std::fs::{read_to_string, File};
 use std::io::{self, Write};
 use std::iter::zip;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use crate::extract::extract_agda_code;
@@ -95,7 +95,7 @@ fn collect_html(
             .unwrap()
             .children;
 
-        let forester_blocks = agda_html_blocks(nodes);
+        let forester_blocks = agda_html_blocks(working_dir, nodes);
 
         let new_tree = tree.merge(forester_blocks);
 
@@ -106,7 +106,7 @@ fn collect_html(
     Ok(())
 }
 
-fn agda_html_blocks(nodes: &Vec<Node>) -> VecDeque<String> {
+fn agda_html_blocks(working_dir: &PathBuf, nodes: &Vec<Node>) -> VecDeque<String> {
     let mut blocks = VecDeque::new();
     let mut buffer = String::new();
     let mut recording = false;
@@ -139,7 +139,7 @@ fn agda_html_blocks(nodes: &Vec<Node>) -> VecDeque<String> {
             }
             last_col_end = end_col_of_symbol(elem);
             line = line_of_symbol(elem);
-            buffer.push_str(symbol2forest(elem).as_str());
+            buffer.push_str(symbol2forest(working_dir, elem).as_str());
         }
     }
 
@@ -163,7 +163,7 @@ fn end_col_of_symbol(elem: &Element) -> usize {
     elem.source_span.end_column
 }
 
-fn symbol2forest(elem: &Element) -> String {
+fn symbol2forest(working_dir: &PathBuf, elem: &Element) -> String {
     let mut s = format!("\\<html:{}>", elem.name);
 
     if elem.id.is_some() {
@@ -173,7 +173,30 @@ fn symbol2forest(elem: &Element) -> String {
         s.push_str(format!("[class]{{{}}}", elem.classes[0]).as_str());
     }
     for (k, v) in &elem.attributes {
-        s.push_str(format!("[{}]{{{}}}", k, v.clone().unwrap().as_str()).as_str());
+        let value = v.clone().unwrap();
+        let value = if k == "href" {
+            // value is a xxx.html#id
+            // 1. split at `#`
+            // 2. if there is a `xxx.lagda.tree` in workding dir, replace the path with `xxx.xml`
+            // 3. put `#id` back if exists
+            let split = value.split_terminator('#').collect::<Vec<&str>>();
+            let a_link = split[0];
+            let path = Path::new(a_link);
+            if working_dir.join(path).with_extension("lagda.tree").exists() {
+                let mut s = path.with_extension("xml").to_str().unwrap().to_owned();
+                s.push('#');
+                if split.len() == 2 {
+                    let id_part = split[1];
+                    s.push_str(id_part);
+                }
+                s
+            } else {
+                value
+            }
+        } else {
+            value
+        };
+        s.push_str(format!("[{}]{{{}}}", k, value).as_str());
     }
     if elem.children.is_empty() {
         s.push_str("{}");

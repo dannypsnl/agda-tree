@@ -10,7 +10,7 @@ use std::process::Command;
 use crate::extract::extract_agda_code;
 use crate::tree::Tree;
 
-pub fn execute(working_dir: &PathBuf, output_dir: &PathBuf) -> io::Result<()> {
+pub fn execute(working_dir: &PathBuf, output_dir: &PathBuf, skip_agda: bool) -> io::Result<()> {
     let paths = fs::read_dir(working_dir)?
         .filter_map(Result::ok)
         .filter_map(|f| {
@@ -25,11 +25,9 @@ pub fn execute(working_dir: &PathBuf, output_dir: &PathBuf) -> io::Result<()> {
 
     let trees = generate_lagda_md(&paths)?;
     generate_index(&paths)?;
-    let _ = Command::new("agda")
-        .current_dir(working_dir)
-        .args(["--html", "index.agda"])
-        .output()
-        .expect("failed to build agda htmls");
+    if !skip_agda {
+        run_agda_build(working_dir)?;
+    }
     collect_html(working_dir, output_dir, &paths, trees)
 }
 
@@ -44,6 +42,15 @@ fn generate_lagda_md(paths: &Vec<PathBuf>) -> io::Result<Vec<Tree>> {
         r.push(tree);
     }
     Ok(r)
+}
+
+fn run_agda_build(working_dir: &PathBuf) -> io::Result<()> {
+    let _ = Command::new("agda")
+        .current_dir(working_dir)
+        .args(["--html", "index.agda"])
+        .output()
+        .expect("failed to build agda htmls");
+    Ok(())
 }
 
 fn generate_index(paths: &Vec<PathBuf>) -> io::Result<()> {
@@ -179,7 +186,7 @@ fn symbol2forest(elem: &Element) -> String {
             || childtext.contains('{')
             || childtext.contains('}')
         {
-            s.push_str(format!("{{\\startverb {} \\stopverb}}", childtext).as_str());
+            s.push_str(format!("{{\\startverb{}\\stopverb}}", childtext).as_str());
         } else {
             s.push_str(format!("{{{}}}", childtext).as_str());
         }

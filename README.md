@@ -30,3 +30,7 @@ The command will
 4. read `*.html` to generate `*.tree`
 
 After that, you can move generated `*.tree` to `trees/` directory in forest, then you can view literate Agda in forster system.
+
+## Example
+
+![image](https://github.com/user-attachments/assets/540a181a-cace-4412-ae4b-9afc7daa6ce9)

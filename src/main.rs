@@ -109,6 +109,7 @@ fn agda_html_blocks(nodes: &Vec<Node>) -> VecDeque<String> {
         let elem = node.element().unwrap();
         if is_block_start(elem) {
             recording = true;
+            last_col_end = 1;
             buffer.push_str("\\<html:pre>[class]{Agda}{\n");
         } else if is_block_end(elem) {
             buffer.push_str("}");

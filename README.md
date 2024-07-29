@@ -20,15 +20,11 @@ then you can run
 ```sh
 agda-tree build xxx
 ```
+After that, you can move generated `*.tree` to `trees/` directory in forest, then you can view literate Agda in forster system. The current internal working flow is as follows:
 
-The command will
+![image](https://github.com/dannypsnl/agda-tree/blob/main/workflow.svg)
 
-1. compile `*.lagda.tree` in `xxx/` to `*.lagda.md`
-2. generates a `index.agda` that import `*`, so this is a proper root module.
-3. invoke `agda --html index.agda`
-4. read `*.html` to generate `*.tree`
-
-After that, you can move generated `*.tree` to `trees/` directory in forest, then you can view literate Agda in forster system.
+This will change if agda directly accept `*.lagda.tree` as input, at that case I will update agda-tree to fit it.
 
 ## Example
 

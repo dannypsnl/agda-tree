@@ -2,6 +2,12 @@
 
 Converts `*.lagda.tree` to `*.tree`.
 
+## Install
+
+```sh
+cargo install agda-tree
+```
+
 ## Usage
 
 Let's say you have a forest (evergreen notes system via [forester](https://www.jonmsterling.com/jms-005P.xml)), and the directory structure is

@@ -28,7 +28,7 @@ agda-tree build xxx
 ```
 After that, you can move generated `*.tree` to `trees/` directory in forest, then you can view literate Agda in forster system. The current internal working flow is as follows:
 
-![image](https://github.com/dannypsnl/agda-tree/blob/main/workflow.svg)
+![image](https://github.com/user-attachments/assets/7c729e53-71fe-4c3b-9874-700238ffc655)
 
 This will change if agda directly accept `*.lagda.tree` as input, at that case I will update agda-tree to fit it.
 

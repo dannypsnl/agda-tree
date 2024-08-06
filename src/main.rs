@@ -29,7 +29,7 @@ fn main() -> io::Result<()> {
             };
             let output_dir = match output_dir {
                 Some(v) => v,
-                None => &PathBuf::new().join("."),
+                None => &PathBuf::new().join("trees"),
             };
             command::build::execute(working_dir, output_dir, *skip_agda)
         }

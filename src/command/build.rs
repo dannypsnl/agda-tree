@@ -1,7 +1,6 @@
 use html_parser::{Dom, Element, Node};
 use std::collections::VecDeque;
-use std::fs::{self};
-use std::fs::{read_to_string, File};
+use std::fs::{self, create_dir_all, read_to_string, File};
 use std::io::{self, Write};
 use std::iter::zip;
 use std::path::{Path, PathBuf};
@@ -99,6 +98,7 @@ fn collect_html(
 
         let new_tree = tree.merge(forester_blocks);
 
+        create_dir_all(output_dir)?;
         let output = File::create(output_dir.join(basename).with_extension("tree"))?;
         new_tree.write(output);
     }

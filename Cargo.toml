@@ -1,6 +1,6 @@
 [package]
 name = "agda-tree"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 description = "A build tool for *.lagda.tree format"
 license = "GPL-3.0-or-later"

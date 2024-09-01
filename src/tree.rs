@@ -44,9 +44,8 @@ impl Tree {
         for l in &self.lines {
             match l {
                 Content(s) => {
-                    let mut content = s.clone();
-                    content.push('\n');
-                    let _ = output.write(content.as_bytes()).unwrap();
+                    let _ = output.write(s.as_bytes()).unwrap();
+                    let _ = output.write(&[b'\n']).unwrap();
                 }
                 AgdaBlock => {}
             }

@@ -30,7 +30,7 @@ After that, you can move generated `*.tree` to `trees/` directory in forest, the
 
 ![image](https://github.com/user-attachments/assets/7c729e53-71fe-4c3b-9874-700238ffc655)
 
-This will change if agda directly accept `*.lagda.tree` as input, at that case I will update agda-tree to fit it.
+agda will accept `*.lagda.tree` as input once 2.8.0 release, agda-tree will need to change workflow for that.
 
 ## Example
 

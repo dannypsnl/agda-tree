@@ -23,7 +23,7 @@ pub fn execute(working_dir: &PathBuf, output_dir: &PathBuf) -> io::Result<()> {
 
         let created_path = output_dir
             .join(tree_path.file_stem().unwrap())
-            .with_extension("tree");
+            .with_added_extension("tree");
         println!("Producing {:?}", created_path);
         let mut out_file = File::create(created_path)?;
         out_file.write_all(new_content.as_bytes())?;
@@ -120,8 +120,9 @@ fn symbol2forest(working_dir: &PathBuf, elem: &Element) -> String {
             let split = value.split_terminator('#').collect::<Vec<&str>>();
             let a_link = split[0];
             let path = Path::new(a_link);
-            if working_dir.join(path).with_extension("lagda.tree").exists() {
-                let mut s = path.with_extension("xml").to_str().unwrap().to_owned();
+            if working_dir.join("html").join(path).with_extension("tree").exists() {
+                let mut s = path.with_extension("").join("index.xml").to_str().unwrap().to_owned();
+                s.push('#');
                 s.push('#');
                 if split.len() == 2 {
                     let id_part = split[1];
@@ -129,7 +130,17 @@ fn symbol2forest(working_dir: &PathBuf, elem: &Element) -> String {
                 }
                 s
             } else {
-                value
+                let mut s = path.to_str().unwrap().to_owned();
+                s.push('#');
+                s.push('#');
+                if split.len() == 2 {
+                    let id_part = split[1];
+                    s.push_str(id_part);
+                    s
+                }
+                else{
+                    value
+                }
             }
         } else {
             value
@@ -146,12 +157,35 @@ fn symbol2forest(working_dir: &PathBuf, elem: &Element) -> String {
         } else {
             childtext.to_owned()
         };
+        let childtext = if childtext.contains("&lt;") {
+            childtext.replace("&lt;", "<")
+        } else {
+            childtext.to_owned()
+        };
+        let childtext = if childtext.contains("&lt;") {
+            childtext.replace("&gt;", ">")
+        } else {
+            childtext.to_owned()
+        };
+        let childtext = if childtext.contains("&quot;") {
+            childtext.replace("&quot;", "\"")
+        } else {
+            childtext.to_owned()
+        };
+        // TODO: Hack to get \startverb-- to work "properly" in forester
+        let childtext = if childtext.starts_with("--") {
+            childtext.replacen("--", " --", 1)
+        } else{
+            childtext.to_owned()
+        };
         if childtext.contains('(')
             || childtext.contains(')')
             || childtext.contains('{')
             || childtext.contains('}')
+            || childtext.contains('[')
+            || childtext.contains(']')
         {
-            s.push_str(format!("{{\\startverb{}\\stopverb}}", childtext).as_str());
+            s.push_str(format!("{{\\startverb {}\\stopverb}}", childtext).as_str());
         } else {
             s.push_str(format!("{{{}}}", childtext).as_str());
         }
